@@ -8,6 +8,7 @@
     "dev": "node --watch --loader ts-node/esm src/index.ts"
   },
   "dependencies": {
+    "@sentry/node": "^10.22.0",
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "ts-node": "^10.9.2"
