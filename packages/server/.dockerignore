@@ -1,0 +1,11 @@
+node_modules
+npm-debug.log
+.npmrc
+dist
+coverage
+.vitest
+.DS_Store
+*.local
+*.env
+src/data
+
