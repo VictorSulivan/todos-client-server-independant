@@ -10,9 +10,6 @@ on:
     tags:
       - 'v*.*.*'
 
-env:
-  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/todo-server
-
 jobs:
   build-pr:
     if: github.event_name == 'pull_request'
@@ -38,12 +35,12 @@ jobs:
           file: ./packages/server/Dockerfile
           platforms: linux/amd64
           load: true
-          tags: ${{ env.IMAGE_NAME }}:pr-${{ github.event.pull_request.number }}
+          tags: todo-server:pr-${{ github.event.pull_request.number }}
 
       - name: Trivy scan (fail on CRITICAL)
         uses: aquasecurity/trivy-action@0.24.0
         with:
-          image-ref: ${{ env.IMAGE_NAME }}:pr-${{ github.event.pull_request.number }}
+          image-ref: todo-server:pr-${{ github.event.pull_request.number }}
           format: 'table'
           exit-code: '1'
           ignore-unfixed: true
@@ -81,6 +78,6 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: |
-            ${{ env.IMAGE_NAME }}:${{ github.ref_name }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/todo-server:${{ github.ref_name }}
 
 
