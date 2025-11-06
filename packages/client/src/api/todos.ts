@@ -1,4 +1,4 @@
-const API_URL = 'https://todos-client-server-fork.onrender.com';
+const API_URL = 'https://todos-client-server-fork.onrender.com/api/todos';
 
 export interface Todo {
   id: string;
