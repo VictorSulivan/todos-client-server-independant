@@ -32,7 +32,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./packages/server
-          file: Dockerfile
+          file: ./packages/server/Dockerfile
           platforms: linux/amd64
           load: true
           tags: todo-server:pr-${{ github.event.pull_request.number }}
@@ -74,7 +74,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./packages/server
-          file: Dockerfile
+          file: ./packages/server/Dockerfile
           platforms: linux/amd64
           push: true
           tags: |
