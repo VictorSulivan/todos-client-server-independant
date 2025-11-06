@@ -20,7 +20,7 @@ jobs:
           fi
           curl -H "Content-Type: application/json" \
             -d "{\"content\": \"✅ **Déploiement réussi**\n\nVersion: \`$VERSION\`\nWorkflow: \`${{ github.event.workflow_run.name }}\`\nCommit: \`${{ github.event.workflow_run.head_sha }}\`\n[Voir les détails](${{ github.event.workflow_run.html_url }})\"}" \
-            "${{ secrets.DISCORD_WEBHOOK_URL }}"
+            "https://discord.com/api/webhooks/1435983934231019520/lQI-bhtC22FMcMTWYp7_nNR6OC_65RUcVVZMYQw-UX6uFv76irTG9iTQtWyO_ZyypZg2"
 
       - name: Notify failure
         if: ${{ github.event.workflow_run.conclusion == 'failure' }}
@@ -31,5 +31,5 @@ jobs:
           fi
           curl -H "Content-Type: application/json" \
             -d "{\"content\": \"❌ **Déploiement échoué**\n\nVersion: \`$VERSION\`\nWorkflow: \`${{ github.event.workflow_run.name }}\`\nCommit: \`${{ github.event.workflow_run.head_sha }}\`\n[Voir les détails](${{ github.event.workflow_run.html_url }})\"}" \
-            "${{ secrets.DISCORD_WEBHOOK_URL }}"
+            "https://discord.com/api/webhooks/1435983934231019520/lQI-bhtC22FMcMTWYp7_nNR6OC_65RUcVVZMYQw-UX6uFv76irTG9iTQtWyO_ZyypZg2"
 
