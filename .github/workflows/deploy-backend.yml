@@ -13,10 +13,96 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Trigger Render deployment
+      - name: Install jq
         run: |
-          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}" \
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          else
+            echo "jq est déjà installé"
+          fi
+
+      - name: Trigger Render deployment
+        id: trigger
+        run: |
+          if [ -z "${{ secrets.RENDER_DEPLOY_HOOK }}" ]; then
+            echo "Error: RENDER_DEPLOY_HOOK secret is not set"
+            exit 1
+          fi
+          
+          echo "Déclenchement du déploiement sur Render..."
+          RESPONSE=$(curl -s -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}" \
             -H "Content-Type: application/json" \
-            -d '{"version": "${{ github.ref_name }}"}'
+            -d "{\"version\": \"${{ github.ref_name }}\"}")
+          
+          echo "Réponse de Render: $RESPONSE"
+          
+          # Extraire l'ID du déploiement depuis la réponse
+          DEPLOY_ID=$(echo "$RESPONSE" | jq -r '.id // .deployId // empty')
+          
+          if [ -z "$DEPLOY_ID" ] || [ "$DEPLOY_ID" == "null" ]; then
+            echo "Erreur: Impossible d'extraire l'ID du déploiement depuis la réponse"
+            echo "Réponse complète: $RESPONSE"
+            exit 1
+          fi
+          
+          echo "ID du déploiement: $DEPLOY_ID"
+          echo "deploy_id=$DEPLOY_ID" >> "$GITHUB_OUTPUT"
+        continue-on-error: false
+
+      - name: Wait for Render deployment to complete
+        id: wait
+        run: |
+          if [ -z "${{ secrets.RENDER_API_KEY }}" ] || [ -z "${{ secrets.RENDER_SERVICE_ID }}" ]; then
+            echo "Warning: RENDER_API_KEY ou RENDER_SERVICE_ID non défini, impossible de vérifier le statut"
+            echo "Le déploiement a été déclenché mais le statut ne sera pas vérifié"
+            exit 0
+          fi
+          
+          DEPLOY_ID="${{ steps.trigger.outputs.deploy_id }}"
+          SERVICE_ID="${{ secrets.RENDER_SERVICE_ID }}"
+          API_KEY="${{ secrets.RENDER_API_KEY }}"
+          MAX_ATTEMPTS=60  # 60 tentatives
+          ATTEMPT_INTERVAL=10  # 10 secondes entre chaque tentative (total: 10 minutes max)
+          
+          echo "Surveillance du déploiement $DEPLOY_ID sur le service $SERVICE_ID..."
+          
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            echo "Tentative $i/$MAX_ATTEMPTS..."
+            
+            STATUS_RESPONSE=$(curl -s -H "Authorization: Bearer $API_KEY" \
+              "https://api.render.com/v1/services/$SERVICE_ID/deploys/$DEPLOY_ID")
+            
+            STATUS=$(echo "$STATUS_RESPONSE" | jq -r '.status // empty')
+            
+            if [ -z "$STATUS" ] || [ "$STATUS" == "null" ]; then
+              echo "Warning: Impossible de récupérer le statut. Réponse: $STATUS_RESPONSE"
+              sleep $ATTEMPT_INTERVAL
+              continue
+            fi
+            
+            echo "Statut actuel: $STATUS"
+            
+            # Statuts finaux possibles: "live", "build_failed", "update_failed", "canceled"
+            case "$STATUS" in
+              "live")
+                echo "✅ Déploiement réussi!"
+                echo "deployment_status=success" >> "$GITHUB_OUTPUT"
+                exit 0
+                ;;
+              "build_failed"|"update_failed"|"canceled")
+                echo "❌ Déploiement échoué avec le statut: $STATUS"
+                echo "deployment_status=failed" >> "$GITHUB_OUTPUT"
+                exit 1
+                ;;
+              *)
+                echo "Déploiement en cours (statut: $STATUS), attente de $ATTEMPT_INTERVAL secondes..."
+                sleep $ATTEMPT_INTERVAL
+                ;;
+            esac
+          done
+          
+          echo "⏱️ Timeout: Le déploiement n'a pas été complété dans le délai imparti"
+          echo "deployment_status=timeout" >> "$GITHUB_OUTPUT"
+          exit 1
         continue-on-error: false
 

@@ -10,14 +10,51 @@ jobs:
   notify:
     name: Notify Discord
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
+      - name: Install jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
+
+      - name: Extract version
+        id: version
+        run: |
+          # Essayer d'extraire la version depuis head_branch (pour les branches)
+          VERSION="${{ github.event.workflow_run.head_branch }}"
+          
+          # Si head_branch est vide (cas d'un push de tag), essayer d'extraire le tag depuis le commit
+          if [ -z "$VERSION" ] || [ "$VERSION" == "null" ]; then
+            COMMIT_SHA="${{ github.event.workflow_run.head_sha }}"
+            
+            # Utiliser l'API GitHub pour obtenir les tags associés au commit
+            # On récupère tous les tags et on cherche celui qui pointe vers ce commit
+            TAGS_RESPONSE=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              "https://api.github.com/repos/${{ github.repository }}/git/refs/tags")
+            
+            # Extraire le tag qui correspond au commit
+            TAG=$(echo "$TAGS_RESPONSE" | jq -r --arg sha "$COMMIT_SHA" \
+              '.[] | select(.object.sha == $sha or .object.type == "commit") | .ref' | \
+              sed 's|refs/tags/||' | head -1)
+            
+            if [ -n "$TAG" ] && [ "$TAG" != "null" ] && [ -n "$TAG" ]; then
+              VERSION="$TAG"
+            else
+              # Si aucun tag trouvé, utiliser les 7 premiers caractères du commit SHA
+              VERSION="${COMMIT_SHA:0:7}"
+            fi
+          fi
+          
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Version extraite: $VERSION"
+
       - name: Notify success
         if: ${{ github.event.workflow_run.conclusion == 'success' }}
         run: |
-          VERSION="${{ github.event.workflow_run.head_branch }}"
-          if [ -z "$VERSION" ] || [ "$VERSION" == "null" ]; then
-            VERSION="unknown"
-          fi
+          VERSION="${{ steps.version.outputs.version }}"
+          
           WEBHOOK_URL="https://discord.com/api/webhooks/1435983934231019520/lQI-bhtC22FMcMTWYp7_nNR6OC_65RUcVVZMYQw-UX6uFv76irTG9iTQtWyO_ZyypZg2"
           if [ -z "$WEBHOOK_URL" ]; then
             echo "Error: WEBHOOK_URL is empty"
@@ -30,10 +67,8 @@ jobs:
       - name: Notify failure
         if: ${{ github.event.workflow_run.conclusion == 'failure' }}
         run: |
-          VERSION="${{ github.event.workflow_run.head_branch }}"
-          if [ -z "$VERSION" ] || [ "$VERSION" == "null" ]; then
-            VERSION="unknown"
-          fi
+          VERSION="${{ steps.version.outputs.version }}"
+          
           WEBHOOK_URL="https://discord.com/api/webhooks/1435983934231019520/lQI-bhtC22FMcMTWYp7_nNR6OC_65RUcVVZMYQw-UX6uFv76irTG9iTQtWyO_ZyypZg2"
           if [ -z "$WEBHOOK_URL" ]; then
             echo "Error: WEBHOOK_URL is empty"
