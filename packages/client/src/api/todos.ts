@@ -1,4 +1,7 @@
-const API_URL = 'http://localhost:3001/api/todos';
+const API_URL = process.env.API_URL || 'http://localhost:3001/api/todos';
+if (!API_URL) {
+  throw new Error('API_URL is not set');
+}
 
 export interface Todo {
   id: string;
