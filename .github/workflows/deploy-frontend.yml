@@ -24,13 +24,13 @@ jobs:
         run: npm install --global vercel@latest
 
       - name: Pull Vercel Environment Information (repo root)
-        run: vercel pull --yes --environment=production --token=cQIofyurJL9Rx7XasNSnqbsT
+        run: vercel pull --yes --environment=production --token=iJKZsi5viTmitD1DgtzWTI9e
 
       - name: Build Project Artifacts (repo root)
-        run: vercel build --prod --token=cQIofyurJL9Rx7XasNSnqbsT
+        run: vercel build --prod --token=iJKZsi5viTmitD1DgtzWTI9e
 
       - name: Deploy Project Artifacts to Vercel (repo root)
-        run: vercel deploy --prebuilt --prod --token=cQIofyurJL9Rx7XasNSnqbsT
+        run: vercel deploy --prebuilt --prod --token=iJKZsi5viTmitD1DgtzWTI9e
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
