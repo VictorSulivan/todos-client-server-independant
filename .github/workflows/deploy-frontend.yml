@@ -23,6 +23,10 @@ jobs:
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
+      - name: Install dependencies
+        working-directory: packages/client
+        run: npm ci
+
       - name: Pull Vercel Environment Information (repo root)
         run: vercel pull --yes --environment=production --token=iJKZsi5viTmitD1DgtzWTI9e
 
