@@ -15,23 +15,31 @@ jobs:
         if: ${{ github.event.workflow_run.conclusion == 'success' }}
         run: |
           VERSION="${{ github.event.workflow_run.head_branch }}"
-          # Si c'est un tag, head_branch contient le nom du tag (ex: v1.13.0)
           if [ -z "$VERSION" ] || [ "$VERSION" == "null" ]; then
             VERSION="unknown"
           fi
-          curl -X POST "https://discord.com/api/webhooks/1435983934231019520/lQI-bhtC22FMcMTWYp7_nNR6OC_65RUcVVZMYQw-UX6uFv76irTG9iTQtWyO_ZyypZg2" \
+          WEBHOOK_URL="https://discord.com/api/webhooks/1435983934231019520/lQI-bhtC22FMcMTWYp7_nNR6OC_65RUcVVZMYQw-UX6uFv76irTG9iTQtWyO_ZyypZg2"
+          if [ -z "$WEBHOOK_URL" ]; then
+            echo "Error: WEBHOOK_URL is empty"
+            exit 1
+          fi
+          curl -X POST "$WEBHOOK_URL" \
             -H "Content-Type: application/json" \
-            -d "{\"content\": \"✅ **Déploiement reussi\\n\\nVersion: \`$VERSION\`\\nWorkflow: \`${{ github.event.workflow_run.name }}\`\\nCommit: \`${{ github.event.workflow_run.head_sha }}\`\\n[Voir les details](${{ github.event.workflow_run.html_url }})\"}"
+            -d "{\"content\": \"✅ **Déploiement réussi**\\n\\nVersion: \`$VERSION\`\\nWorkflow: \`${{ github.event.workflow_run.name }}\`\\nCommit: \`${{ github.event.workflow_run.head_sha }}\`\\n[Voir les détails](${{ github.event.workflow_run.html_url }})\"}"
 
       - name: Notify failure
         if: ${{ github.event.workflow_run.conclusion == 'failure' }}
         run: |
           VERSION="${{ github.event.workflow_run.head_branch }}"
-          # Si c'est un tag, head_branch contient le nom du tag (ex: v1.13.0)
           if [ -z "$VERSION" ] || [ "$VERSION" == "null" ]; then
             VERSION="unknown"
           fi
-          curl -X POST "https://discord.com/api/webhooks/1435983934231019520/lQI-bhtC22FMcMTWYp7_nNR6OC_65RUcVVZMYQw-UX6uFv76irTG9iTQtWyO_ZyypZg2" \
+          WEBHOOK_URL="https://discord.com/api/webhooks/1435983934231019520/lQI-bhtC22FMcMTWYp7_nNR6OC_65RUcVVZMYQw-UX6uFv76irTG9iTQtWyO_ZyypZg2"
+          if [ -z "$WEBHOOK_URL" ]; then
+            echo "Error: WEBHOOK_URL is empty"
+            exit 1
+          fi
+          curl -X POST "$WEBHOOK_URL" \
             -H "Content-Type: application/json" \
-            -d "{\"content\": \"❌ **Deploiement echoue\\n\\nVersion: \`$VERSION\`\\nWorkflow: \`${{ github.event.workflow_run.name }}\`\\nCommit: \`${{ github.event.workflow_run.head_sha }}\`\\n[Voir les details](${{ github.event.workflow_run.html_url }})\"}"
+            -d "{\"content\": \"❌ **Déploiement échoué**\\n\\nVersion: \`$VERSION\`\\nWorkflow: \`${{ github.event.workflow_run.name }}\`\\nCommit: \`${{ github.event.workflow_run.head_sha }}\`\\n[Voir les détails](${{ github.event.workflow_run.html_url }})\"}"
 
