@@ -1,4 +1,4 @@
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api/todos';
+const API_URL = process.env.VITE_API_URL || 'http://localhost:3001/api/todos';
 if (!API_URL) {
   throw new Error('API_URL is not set');
 }
