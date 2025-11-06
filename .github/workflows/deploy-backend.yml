@@ -37,7 +37,8 @@ jobs:
           echo "Réponse de Render: $RESPONSE"
           
           # Extraire l'ID du déploiement depuis la réponse
-          DEPLOY_ID=$(echo "$RESPONSE" | jq -r '.id // .deployId // empty')
+          # La réponse de Render a la structure: {"deploy":{"id":"..."}}
+          DEPLOY_ID=$(echo "$RESPONSE" | jq -r '.deploy.id // .deployId // .id // empty')
           
           if [ -z "$DEPLOY_ID" ] || [ "$DEPLOY_ID" == "null" ]; then
             echo "Erreur: Impossible d'extraire l'ID du déploiement depuis la réponse"
