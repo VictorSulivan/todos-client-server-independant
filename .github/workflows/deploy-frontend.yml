@@ -13,6 +13,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Configure Git for Vercel
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
@@ -29,16 +34,25 @@ jobs:
 
       - name: Pull Vercel Environment Information
         working-directory: packages/client
-        run: vercel pull --yes --environment=production --token=iJKZsi5viTmitD1DgtzWTI9e
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: vercel pull --yes --environment=production
 
       - name: Build Project Artifacts
         working-directory: packages/client
-        run: vercel build --prod --token=iJKZsi5viTmitD1DgtzWTI9e
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: vercel build --prod
 
       - name: Deploy Project Artifacts to Vercel
         working-directory: packages/client
-        run: vercel deploy --prebuilt --prod --token=iJKZsi5viTmitD1DgtzWTI9e
         env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: vercel deploy --prebuilt --prod
 
