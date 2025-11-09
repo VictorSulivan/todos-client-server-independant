@@ -54,15 +54,16 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
-          DEPLOY_RESPONSE=$(vercel deploy --prod --yes --confirm --token "$VERCEL_TOKEN" --json)
+          set -o pipefail
+          DEPLOY_RESPONSE=$(vercel deploy --prod --yes --confirm --token "$VERCEL_TOKEN" 2>&1)
           echo "$DEPLOY_RESPONSE"
-          DEPLOY_URL=$(echo "$DEPLOY_RESPONSE" | jq -r '.url // empty')
-          if [ -z "$DEPLOY_URL" ] || [ "$DEPLOY_URL" = "null" ]; then
+          DEPLOY_URL=$(echo "$DEPLOY_RESPONSE" | grep -Eo 'https://[a-zA-Z0-9.-]+\.vercel\.app' | tail -1)
+          if [ -z "$DEPLOY_URL" ]; then
             echo "Impossible de récupérer l'URL du déploiement."
             exit 1
           fi
-          echo "Deployment URL: https://$DEPLOY_URL"
-          echo "deployment_url=https://$DEPLOY_URL" >> "$GITHUB_OUTPUT"
+          echo "Deployment URL: $DEPLOY_URL"
+          echo "deployment_url=$DEPLOY_URL" >> "$GITHUB_OUTPUT"
 
       - name: Vérifier le statut du déploiement
         working-directory: packages/client
