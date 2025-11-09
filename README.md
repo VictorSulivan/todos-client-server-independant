@@ -104,7 +104,7 @@ docker run --rm -e PORT=3001 -p 3001:3001 todo-server:local
 ## URLs de déploiement
 
 **Frontend :**
-- URL principale : `https://todos-client-server-independant-matheos-projects-558f8c3b.vercel.app`
+- URL principale : `https://todos-client-server-independant-three.vercel.app`
 - URL courte (dernière build) : `https://todos-client-server-independant-77loh0nbo.vercel.app`
 
 **Backend :**

@@ -63,7 +63,7 @@
 ### 5. URLs de déploiement (Smoke tests)
 
 Après le premier déploiement, ajouter ces secrets :
-- `FRONTEND_URL` : `https://todos-client-server-independant-matheos-projects-558f8c3b.vercel.app`
+- `FRONTEND_URL` : `https://todos-client-server-independant-three.vercel.app`
 - `BACKEND_URL` : `https://todos-client-server-fork.onrender.com`
 
 ### 6. Sentry (Déjà configuré)
