@@ -4,8 +4,9 @@
 
 | NOM | Prénom |
 |-----|--------|
-| Victor Sulivan — responsable du dépôt GitHub et de la pipeline CI/CD |
-| Matheo (compte Vercel) — responsable du déploiement frontend |
+| Guillemin | Matheo |
+|-----|--------|
+| Tetard | Hermione |
 
 ## Architecture et choix techniques
 
