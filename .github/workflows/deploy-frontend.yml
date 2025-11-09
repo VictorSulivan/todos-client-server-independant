@@ -28,6 +28,12 @@ jobs:
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
+      - name: Install jq
+        run: |
+          if ! command -v jq >/dev/null 2>&1; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
+
       - name: Install dependencies
         working-directory: packages/client
         run: npm ci
@@ -40,19 +46,75 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: vercel pull --yes --environment=production --token "$VERCEL_TOKEN"
 
-      - name: Build Project Artifacts
+      - name: Deploy to Vercel (trigger remote build)
+        id: deploy
         working-directory: packages/client
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: vercel build --prod --token "$VERCEL_TOKEN"
+        run: |
+          DEPLOY_RESPONSE=$(vercel deploy --prod --yes --confirm --token "$VERCEL_TOKEN" --json)
+          echo "$DEPLOY_RESPONSE"
+          DEPLOY_URL=$(echo "$DEPLOY_RESPONSE" | jq -r '.url // empty')
+          if [ -z "$DEPLOY_URL" ] || [ "$DEPLOY_URL" = "null" ]; then
+            echo "Impossible de récupérer l'URL du déploiement."
+            exit 1
+          fi
+          echo "Deployment URL: https://$DEPLOY_URL"
+          echo "deployment_url=https://$DEPLOY_URL" >> "$GITHUB_OUTPUT"
 
-      - name: Deploy Project Artifacts to Vercel
+      - name: Vérifier le statut du déploiement
         working-directory: packages/client
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: vercel deploy --prebuilt --prod --token "$VERCEL_TOKEN"
+        run: |
+          DEPLOYMENT_URL="${{ steps.deploy.outputs.deployment_url }}"
+          if [ -z "$DEPLOYMENT_URL" ]; then
+            echo "URL du déploiement introuvable."
+            exit 1
+          fi
+
+          echo "Surveillance du déploiement $DEPLOYMENT_URL"
+          MAX_ATTEMPTS=60
+          SLEEP_SECONDS=10
+
+          for attempt in $(seq 1 $MAX_ATTEMPTS); do
+            INSPECT_RESPONSE=$(vercel inspect "$DEPLOYMENT_URL" --token "$VERCEL_TOKEN" --json || true)
+            echo "$INSPECT_RESPONSE"
+
+            STATE=$(echo "$INSPECT_RESPONSE" | jq -r '.deployment.readyState // .deployment.state // empty')
+
+            if [ -z "$STATE" ] || [ "$STATE" = "null" ]; then
+              echo "Impossible de récupérer l'état du déploiement. Nouvelle tentative dans $SLEEP_SECONDS secondes..."
+              sleep $SLEEP_SECONDS
+              continue
+            fi
+
+            echo "État actuel: $STATE"
+
+            case "$STATE" in
+              READY)
+                echo "Déploiement réussi 🎉"
+                exit 0
+                ;;
+              ERROR|FAILED|CANCELED|CANCELLED)
+                echo "Déploiement échoué avec l'état: $STATE"
+                exit 1
+                ;;
+              BUILDING|QUEUED|INITIALIZING|BOOTING)
+                echo "Déploiement en cours. Attente de $SLEEP_SECONDS secondes..."
+                sleep $SLEEP_SECONDS
+                ;;
+              *)
+                echo "État inattendu: $STATE. Attente de $SLEEP_SECONDS secondes..."
+                sleep $SLEEP_SECONDS
+                ;;
+            esac
+          done
+
+          echo "Timeout: le déploiement n'est pas READY après $((MAX_ATTEMPTS * SLEEP_SECONDS)) secondes."
+          exit 1
 
