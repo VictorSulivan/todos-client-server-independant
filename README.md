@@ -4,7 +4,8 @@
 
 | NOM | Prénom |
 |-----|--------|
-| [À compléter] | [À compléter] |
+| Victor Sulivan — responsable du dépôt GitHub et de la pipeline CI/CD |
+| Matheo (compte Vercel) — responsable du déploiement frontend |
 
 ## Architecture et choix techniques
 
@@ -17,10 +18,9 @@
 - Déployé sur Vercel
 
 **Backend (Server)**
-- Node.js 20 avec Express
-- TypeScript
+- Node.js 20 avec Express et TypeScript
 - Sentry pour l'observabilité
-- Déployé sur Render avec Docker
+- Déployé sur Render via une image Docker versionnée
 
 ### Structure du projet
 
@@ -68,13 +68,20 @@ npm run dev
 # L'application démarre sur http://localhost:5173
 ```
 
-### Tests
+### Tests & qualité
 
 **Backend :**
 ```bash
 cd packages/server
 npm run test          # Tests unitaires
 npm run coverage      # Tests avec couverture
+```
+
+**Frontend :**
+```bash
+cd packages/client
+npm run lint          # ESLint
+npm run typecheck     # Vérification TypeScript
 ```
 
 **Commitlint (validation des commits) :**
@@ -96,38 +103,34 @@ docker run --rm -e PORT=3001 -p 3001:3001 todo-server:local
 
 ## URLs de déploiement
 
-**Frontend :** [À compléter après déploiement sur Vercel]
-- URL : `https://[votre-app].vercel.app`
+**Frontend :**
+- URL principale : `https://todos-client-server-independant-matheos-projects-558f8c3b.vercel.app`
+- URL courte (dernière build) : `https://todos-client-server-independant-77loh0nbo.vercel.app`
 
-**Backend :** [À compléter après déploiement sur Render]
-- URL : `https://[votre-app].onrender.com`
-- API : `https://[votre-app].onrender.com/api/todos`
+**Backend :**
+- URL : `https://todos-client-server-fork.onrender.com`
+- API : `https://todos-client-server-fork.onrender.com/api/todos`
 
 ## Pipeline CI/CD
 
-### Workflows GitHub Actions
+### Workflows GitHub Actions principaux
 
-#### Qualité
-- **test-unit** : Tests unitaires backend avec Vitest (sur push/PR)
-- **coverage-check** : Vérification de la couverture de code (≥70% statements/lines, ≥60% branches/functions) - PR uniquement
-- **lint-commits** : Validation des messages de commit (Conventional Commits) - PR uniquement
+#### Qualité (push & PR)
+- `install` : installation des dépendances frontend (mise en cache npm)
+- `lint` : `npm run lint` dans `packages/client`
+- `typecheck` : `npm run typecheck` dans `packages/client`
+- `ci-server-tests` : tests backend (Vitest) + couverture
+- `ci-commitlint` : validation des messages de commit
+- `ci-security-npm` : `npm audit --audit-level=high` (client & serveur)
 
-#### Packaging
-- **docker-build-and-scan** :
-  - Sur PR : Build de l'image Docker + scan Trivy (fail on CRITICAL)
-  - Sur tag (v*.*.*) : Build + push de l'image versionnée sur Docker Hub
+#### Packaging & sécurité
+- `ci-docker` : build de l'image backend + scan Trivy (PR) / push vers Docker Hub (tags)
 
-#### Sécurité
-- **security-scan-npm** : `npm audit --audit-level=high` sur client et server (sur push/PR)
-- **security-scan-docker** : Scan Trivy de l'image Docker (sur PR uniquement)
-
-#### Déploiement (sur tag uniquement)
-- **deploy-frontend** : Déploiement sur Vercel
-- **deploy-backend** : Déclenchement du déploiement Render via webhook
-- **smoke-test** : Validation post-déploiement (health checks frontend + backend)
-
-#### Notifications
-- **notify-discord** : Notifications Discord sur succès/échec des déploiements
+#### Déploiement (tags `v*.*.*` uniquement)
+- `deploy-frontend` : déclenchement du build Vercel via CLI et suivi via l'API Vercel
+- `deploy-backend` : déclenchement Render + polling API jusqu'à `READY`
+- `smoke-test` : tests de disponibilité frontend/back (utilise `FRONTEND_URL` & `BACKEND_URL`)
+- `notify-discord` : message Discord succès/échec
 
 ### Stratégie de déploiement
 
@@ -188,7 +191,7 @@ L'application backend est instrumentée avec Sentry pour capturer les erreurs.
 - Initialisation dans `packages/server/src/instrument.ts`
 
 ### Preuve d'intégration
-[À ajouter : Screenshot du dashboard Sentry montrant l'erreur capturée]
+- Déclencher `GET /debug-sentry` sur le backend puis vérifier que l'événement apparaît sur le dashboard Sentry (`Projects > todo-server`).
 
 ## Secrets GitHub requis
 
@@ -219,5 +222,5 @@ Exemples :
 
 ## Licence
 
-[À compléter]
+Ce projet est fourni dans le cadre du module DevOps de l'ECE (usage pédagogique).
 

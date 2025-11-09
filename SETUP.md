@@ -9,17 +9,24 @@
 ### 2. Vercel (Frontend)
 
 **Étapes :**
-1. Créer un compte sur [vercel.com](https://vercel.com)
-2. Importer le projet `packages/client`
-3. Obtenir les tokens :
-   - Aller dans Settings → Tokens
-   - Créer un nouveau token → Copier le token
-   - Dans Settings → General → Copier `Org ID` et `Project ID`
+1. Créer un compte sur [vercel.com](https://vercel.com) ou utiliser le compte `Matheo` déjà configuré.
+2. Importer le dossier `packages/client` (root dans un sous-répertoire).
+3. Dans _Project Settings → General_ :
+   - **Framework preset** : `Vite`
+   - **Root Directory** : `packages/client`
+   - **Build Command** : `npm run build`
+   - **Install Command** : `npm install`
+   - **Output Directory** : `dist`
+   - **Node.js version** : `22.x`
+4. Dans _Settings → Tokens_ : créer un token personnel (compte ayant accès au projet) et le copier.
+5. Dans _General_ : récupérer `Org ID` et `Project ID`.
 
 **Secrets GitHub à ajouter :**
-- `VERCEL_TOKEN` : Token Vercel
-- `VERCEL_ORG_ID` : ID de l'organisation
-- `VERCEL_PROJECT_ID` : ID du projet
+- `VERCEL_TOKEN` : token personnel du compte Vercel propriétaire (Matheo)
+- `VERCEL_ORG_ID` : ID de l'organisation ou du compte Vercel
+- `VERCEL_PROJECT_ID` : ID du projet Vercel
+
+> ℹ️ Les commandes `vercel pull` et `vercel deploy` sont exécutées depuis la **racine** du dépôt. Les paramètres ci-dessus doivent donc être alignés sur la configuration Vercel.
 
 ### 3. Render (Backend)
 
@@ -56,8 +63,8 @@
 ### 5. URLs de déploiement (Smoke tests)
 
 Après le premier déploiement, ajouter ces secrets :
-- `FRONTEND_URL` : URL Vercel (ex: `https://mon-app.vercel.app`)
-- `BACKEND_URL` : URL Render (ex: `https://mon-app.onrender.com`)
+- `FRONTEND_URL` : `https://todos-client-server-independant-matheos-projects-558f8c3b.vercel.app`
+- `BACKEND_URL` : `https://todos-client-server-fork.onrender.com`
 
 ### 6. Sentry (Déjà configuré)
 
@@ -78,21 +85,23 @@ Après le premier déploiement, ajouter ces secrets :
 3. Push : `git push -u origin test/pr-workflow`
 4. Créer une PR sur GitHub
 5. Vérifier que les workflows s'exécutent :
-   - ✅ test-unit
-   - ✅ coverage-check
-   - ✅ lint-commits
-   - ✅ security-scan-npm
-   - ✅ docker-build-and-scan (build + Trivy)
+   - ✅ `install`
+   - ✅ `lint`
+   - ✅ `typecheck`
+   - ✅ `ci-server-tests`
+   - ✅ `ci-security-npm`
+   - ✅ `ci-docker` (build + Trivy)
+   - ✅ `ci-commitlint`
 
 ### Test de déploiement (sur tag)
-1. Créer un tag : `git tag v1.0.0`
-2. Push le tag : `git push origin v1.0.0`
+1. Créer un tag : `git tag vX.Y.Z`
+2. Push le tag : `git push origin vX.Y.Z`
 3. Vérifier que les workflows s'exécutent :
-   - ✅ docker-build-and-scan (build + push)
-   - ✅ deploy-frontend
-   - ✅ deploy-backend
-   - ✅ smoke-test
-   - ✅ notify-discord
+   - ✅ `ci-docker` (build + push Docker Hub)
+   - ✅ `deploy-frontend`
+   - ✅ `deploy-backend`
+   - ✅ `smoke-test`
+   - ✅ `notify-discord`
 
 ## 📝 Notes importantes
 
