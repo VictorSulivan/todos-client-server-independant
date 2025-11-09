@@ -27,10 +27,6 @@ jobs:
         working-directory: packages/client
         run: npm ci
 
-      - name: Install dependencies (client)
-        working-directory: packages/client
-        run: npm ci
-
   lint:
     name: Lint code
     runs-on: ubuntu-latest
@@ -153,8 +149,8 @@ jobs:
           DEPLOY_EXIT_CODE=$?
           cat deploy.log
 
-          DEPLOY_URL=$(grep -Eo 'https://[a-zA-Z0-9.-]+\.vercel\.app' deploy.log | tail -1)
-          DEPLOY_ID=$(grep -Eo 'deploy_[a-zA-Z0-9]+' deploy.log | tail -1)
+          DEPLOY_URL=$(grep -Eo 'https://[a-zA-Z0-9.-]+\.vercel\.app' deploy.log | head -1)
+          DEPLOY_ID=$(grep -Eo 'dpl_[a-zA-Z0-9]+' deploy.log | tail -1)
 
           if [ $DEPLOY_EXIT_CODE -ne 0 ]; then
             echo "vercel deploy a échoué avec le code $DEPLOY_EXIT_CODE"
